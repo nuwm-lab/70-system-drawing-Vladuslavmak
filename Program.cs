@@ -1,103 +1,66 @@
 ﻿using System;
-using System.Drawing;
-using System.Windows.Forms;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
-namespace GraphDrawer
+namespace PostalIndexFinder
 {
-    public class GraphForm : Form
+    // Клас, який інкапсулює логіку пошуку поштових індексів
+    class PostalIndexSearcher
     {
-        private Graph graph;
+        // Приватне поле зберігає вхідний текст
+        private string _text;
 
-        public GraphForm()
+        // Конструктор для ініціалізації тексту
+        public PostalIndexSearcher(string text)
         {
-            this.Text = "Графік функції y = (5*tg(x+7))/((x+3)^2)";
-            this.BackColor = Color.White;
-            this.graph = new Graph(1.2, 6.3, 0.2);
-
-            this.Resize += (s, e) => this.Invalidate(); // При зміні розміру – перемальовуємо
-            this.Paint += OnPaint;
+            _text = text;
         }
 
-        private void OnPaint(object sender, PaintEventArgs e)
+        // Публічний метод для пошуку поштових індексів
+        public List<string> FindPostalIndexes()
         {
-            graph.Draw(e.Graphics, this.ClientSize);
-        }
+            List<string> indexes = new List<string>();
+            // Регулярний вираз для пошуку п'яти цифр підряд
+            Regex regex = new Regex(@"\b\d{5}\b");
 
-        [STAThread]
-        static void Main()
-        {
-            Application.EnableVisualStyles();
-            Application.Run(new GraphForm());
+            MatchCollection matches = regex.Matches(_text);
+
+            foreach (Match match in matches)
+            {
+                indexes.Add(match.Value);
+            }
+
+            return indexes;
         }
     }
 
-    public class Graph
+    class Program
     {
-        private double xMin, xMax, step;
-
-        public Graph(double xMin, double xMax, double step)
+        static void Main()
         {
-            this.xMin = xMin;
-            this.xMax = xMax;
-            this.step = step;
-        }
+            Console.WriteLine("Введіть текст:");
+            string input = Console.ReadLine();
 
-        public void Draw(Graphics g, Size clientSize)
-        {
-            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            // Створюємо об’єкт класу
+            PostalIndexSearcher searcher = new PostalIndexSearcher(input);
 
-            float width = clientSize.Width;
-            float height = clientSize.Height;
+            // Отримуємо результати
+            List<string> indexes = searcher.FindPostalIndexes();
 
-            // Рамка
-            g.DrawRectangle(Pens.Gray, 10, 10, width - 20, height - 20);
-
-            // Масив точок
-            double[] xValues = GenerateX();
-            double[] yValues = new double[xValues.Length];
-            double yMin = double.MaxValue, yMax = double.MinValue;
-
-            for (int i = 0; i < xValues.Length; i++)
+            Console.WriteLine("\nЗнайдені поштові індекси:");
+            if (indexes.Count > 0)
             {
-                yValues[i] = CalculateY(xValues[i]);
-                if (yValues[i] < yMin) yMin = yValues[i];
-                if (yValues[i] > yMax) yMax = yValues[i];
+                foreach (string index in indexes)
+                {
+                    Console.WriteLine(index);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Поштових індексів не знайдено.");
             }
 
-            Func<double, float> toScreenX = x => (float)((x - xMin) / (xMax - xMin) * (width - 40) + 20);
-            Func<double, float> toScreenY = y => (float)(height - 20 - (y - yMin) / (yMax - yMin) * (height - 40));
-
-            // Осі
-            g.DrawLine(Pens.Black, toScreenX(xMin), toScreenY(0), toScreenX(xMax), toScreenY(0)); // OX
-            g.DrawLine(Pens.Black, toScreenX(0), toScreenY(yMin), toScreenX(0), toScreenY(yMax)); // OY
-
-            // Графік
-            Pen pen = new Pen(Color.Blue, 2);
-            for (int i = 1; i < xValues.Length; i++)
-            {
-                float x1 = toScreenX(xValues[i - 1]);
-                float y1 = toScreenY(yValues[i - 1]);
-                float x2 = toScreenX(xValues[i]);
-                float y2 = toScreenY(yValues[i]);
-
-                if (Math.Abs(yValues[i]) < 1e6 && Math.Abs(yValues[i - 1]) < 1e6)
-                    g.DrawLine(pen, x1, y1, x2, y2);
-            }
-        }
-
-        private double CalculateY(double x)
-        {
-            return (5 * Math.Tan(x + 7)) / Math.Pow((x + 3), 2);
-        }
-
-        private double[] GenerateX()
-        {
-            int count = (int)((xMax - xMin) / step) + 1;
-            double[] xValues = new double[count];
-            for (int i = 0; i < count; i++)
-                xValues[i] = xMin + i * step;
-            return xValues;
+            Console.ReadKey();
         }
     }
 }
-
