@@ -1,18 +1,66 @@
 ﻿using System;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
-namespace LabWork
+namespace PostalIndexFinder
 {
-    // Даний проект є шаблоном для виконання лабораторних робіт
-    // з курсу "Об'єктно-орієнтоване програмування та патерни проектування"
-    // Необхідно змінювати і дописувати код лише в цьому проекті
-    // Відео-інструкції щодо роботи з github можна переглянути 
-    // за посиланням https://www.youtube.com/@ViktorZhukovskyy/videos 
+    // Клас, який інкапсулює логіку пошуку поштових індексів
+    class PostalIndexSearcher
+    {
+        // Приватне поле зберігає вхідний текст
+        private string _text;
+
+        // Конструктор для ініціалізації тексту
+        public PostalIndexSearcher(string text)
+        {
+            _text = text;
+        }
+
+        // Публічний метод для пошуку поштових індексів
+        public List<string> FindPostalIndexes()
+        {
+            List<string> indexes = new List<string>();
+            // Регулярний вираз для пошуку п'яти цифр підряд
+            Regex regex = new Regex(@"\b\d{5}\b");
+
+            MatchCollection matches = regex.Matches(_text);
+
+            foreach (Match match in matches)
+            {
+                indexes.Add(match.Value);
+            }
+
+            return indexes;
+        }
+    }
+
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
-            
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("Введіть текст:");
+            string input = Console.ReadLine();
+
+            // Створюємо об’єкт класу
+            PostalIndexSearcher searcher = new PostalIndexSearcher(input);
+
+            // Отримуємо результати
+            List<string> indexes = searcher.FindPostalIndexes();
+
+            Console.WriteLine("\nЗнайдені поштові індекси:");
+            if (indexes.Count > 0)
+            {
+                foreach (string index in indexes)
+                {
+                    Console.WriteLine(index);
+                }
+            }
+            else
+            {
+                Console.WriteLine("Поштових індексів не знайдено.");
+            }
+
+            Console.ReadKey();
         }
     }
 }
